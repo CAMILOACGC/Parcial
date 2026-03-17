@@ -14,14 +14,25 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun MiPrimeraVista(modifier: Modifier = Modifier) {
-    // Definimos el color verde de tu imagen
+fun MiPrimeraVista(
+    modifier: Modifier = Modifier,
+    onGuardar: (String, String, String) -> Unit,
+    onCancelar: () -> Unit
+) {
     val verdeApp = Color(0xFF388E3C)
+
+    var nombre by remember { mutableStateOf("") }
+    var telefono by remember { mutableStateOf("") }
+    var fecha by remember { mutableStateOf("") }
+    var hora by remember { mutableStateOf("") }
+    var cancha by remember { mutableStateOf("") }
+    var jugadores by remember { mutableStateOf("") }
+    var estado by remember { mutableStateOf("") }
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState()) // Por si la pantalla es pequeña y hay muchos campos
+            .verticalScroll(rememberScrollState())
     ) {
         // --- ENCABEZADO ---
         Row(
@@ -48,13 +59,13 @@ fun MiPrimeraVista(modifier: Modifier = Modifier) {
                 .fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            CampoTextoPersonalizado("Nombre del Cliente")
-            CampoTextoPersonalizado("Teléfono")
-            CampoTextoPersonalizado("Fecha (12/05/2026)")
-            CampoTextoPersonalizado("Hora (10:00 AM)")
-            CampoTextoPersonalizado("Número de Cancha")
-            CampoTextoPersonalizado("Cantidad de Jugadores")
-            CampoTextoPersonalizado("Estado")
+            CampoTextoPersonalizado("Nombre del Cliente", nombre) { nombre = it }
+            CampoTextoPersonalizado("Teléfono", telefono) { telefono = it }
+            CampoTextoPersonalizado("Fecha (12/05/2026)", fecha) { fecha = it }
+            CampoTextoPersonalizado("Hora (10:00 AM)", hora) { hora = it }
+            CampoTextoPersonalizado("Número de Cancha", cancha) { cancha = it }
+            CampoTextoPersonalizado("Cantidad de Jugadores", jugadores) { jugadores = it }
+            CampoTextoPersonalizado("Estado", estado) { estado = it }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -64,7 +75,11 @@ fun MiPrimeraVista(modifier: Modifier = Modifier) {
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Button(
-                    onClick = { /* Acción de guardar */ },
+                    onClick = {
+                        if (nombre.isNotBlank() && hora.isNotBlank() && cancha.isNotBlank()) {
+                            onGuardar(nombre, hora, cancha)
+                        }
+                    },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(containerColor = verdeApp),
                     shape = MaterialTheme.shapes.small
@@ -73,7 +88,7 @@ fun MiPrimeraVista(modifier: Modifier = Modifier) {
                 }
 
                 Button(
-                    onClick = { /* Acción de cancelar */ },
+                    onClick = onCancelar,
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Gray),
                     shape = MaterialTheme.shapes.small
@@ -85,17 +100,14 @@ fun MiPrimeraVista(modifier: Modifier = Modifier) {
     }
 }
 
-// Función auxiliar para no repetir código de los campos de texto
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CampoTextoPersonalizado(label: String) {
-    var texto by remember { mutableStateOf("") }
-
+fun CampoTextoPersonalizado(label: String, valor: String, onCambio: (String) -> Unit) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(text = label, fontSize = 14.sp, fontWeight = FontWeight.Medium)
         OutlinedTextField(
-            value = texto,
-            onValueChange = { texto = it },
+            value = valor,
+            onValueChange = onCambio,
             modifier = Modifier.fillMaxWidth(),
             singleLine = true
         )
