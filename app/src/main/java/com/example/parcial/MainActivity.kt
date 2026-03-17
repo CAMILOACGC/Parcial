@@ -10,12 +10,15 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import com.example.parcial.ui.theme.DashboardVista
+import com.example.parcial.ui.theme.ListadoReservasVista
 import com.example.parcial.ui.theme.MiPrimeraVista
 import com.example.parcial.ui.theme.ParcialTheme
+import com.example.parcial.ui.theme.Reserva
 
 sealed class Pantalla {
     object Dashboard : Pantalla()
     object NuevaReserva : Pantalla()
+    object ListadoReservas : Pantalla()
 }
 
 class MainActivity : ComponentActivity() {
@@ -34,7 +37,7 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier.padding(innerPadding),
                             proximasReservas = proximasReservas,
                             onNuevaReserva = { pantallaActual = Pantalla.NuevaReserva },
-                            onListadoReservas = { /* próximamente */ }
+                            onListadoReservas = { pantallaActual = Pantalla.ListadoReservas }
                         )
                         is Pantalla.NuevaReserva -> MiPrimeraVista(
                             modifier = Modifier.padding(innerPadding),
@@ -43,6 +46,20 @@ class MainActivity : ComponentActivity() {
                                 pantallaActual = Pantalla.Dashboard
                             },
                             onCancelar = { pantallaActual = Pantalla.Dashboard }
+                        )
+                        is Pantalla.ListadoReservas -> ListadoReservasVista(
+                            modifier = Modifier.padding(innerPadding),
+                            reservas = proximasReservas.map {
+                                val partes = it.split(" - ")
+                                Reserva(
+                                    cliente = partes.getOrElse(0) { "" },
+                                    fecha = "12/05/2026",
+                                    hora = partes.getOrElse(1) { "" },
+                                    cancha = partes.getOrElse(2) { "" },
+                                    estado = "Activa"
+                                )
+                            },
+                            onVolver = { pantallaActual = Pantalla.Dashboard }
                         )
                     }
                 }
