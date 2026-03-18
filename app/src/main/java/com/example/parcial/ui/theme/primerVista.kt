@@ -1,9 +1,12 @@
 package com.example.parcial.ui.theme
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -12,11 +15,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.text.SimpleDateFormat
+import java.util.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MiPrimeraVista(
     modifier: Modifier = Modifier,
-    onGuardar: (String, String, String) -> Unit,
+    onGuardar: (String, String, String, String) -> Unit,
     onCancelar: () -> Unit
 ) {
     val verdeApp = Color(0xFF388E3C)
@@ -28,6 +34,51 @@ fun MiPrimeraVista(
     var cancha by remember { mutableStateOf("") }
     var jugadores by remember { mutableStateOf("") }
     var estado by remember { mutableStateOf("") }
+
+    // Estados para los Diálogos
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showTimePicker by remember { mutableStateOf(false) }
+
+    val datePickerState = rememberDatePickerState()
+    val timePickerState = rememberTimePickerState(is24Hour = true)
+
+    if (showDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let {
+                        val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                        fecha = sdf.format(Date(it))
+                    }
+                    showDatePicker = false
+                }) { Text("Aceptar") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) { Text("Cancelar") }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    if (showTimePicker) {
+        AlertDialog(
+            onDismissRequest = { showTimePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    hora = String.format(Locale.getDefault(), "%02d:%02d", timePickerState.hour, timePickerState.minute)
+                    showTimePicker = false
+                }) { Text("Aceptar") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTimePicker = false }) { Text("Cancelar") }
+            },
+            text = {
+                TimePicker(state = timePickerState)
+            }
+        )
+    }
 
     Column(
         modifier = modifier
@@ -41,14 +92,9 @@ fun MiPrimeraVista(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = "<", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Text(text = "<", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable { onCancelar() })
             Spacer(modifier = Modifier.width(80.dp))
-            Text(
-                text = "Nueva Reserva",
-                color = Color.White,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
-            )
+            Text(text = "Nueva Reserva", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
         }
 
         Column(
@@ -57,37 +103,50 @@ fun MiPrimeraVista(
                 .fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            CampoTextoPersonalizado("Nombre del Cliente", nombre) { nombre = it }
-            CampoTextoPersonalizado("Teléfono", telefono) { telefono = it }
-            CampoTextoPersonalizado("Fecha (12/05/2026)", fecha) { fecha = it }
-            CampoTextoPersonalizado("Hora (10:00 AM)", hora) { hora = it }
-            CampoTextoPersonalizado("Número de Cancha", cancha) { cancha = it }
-            CampoTextoPersonalizado("Cantidad de Jugadores", jugadores) { jugadores = it }
-            CampoTextoPersonalizado("Estado", estado) { estado = it }
+            CampoTextoPersonalizado("Nombre del Cliente", nombre, onCambio = { nombre = it })
+            CampoTextoPersonalizado("Teléfono", telefono, onCambio = { telefono = it })
+            
+            // CAMPO FECHA
+            Box(modifier = Modifier.clickable { showDatePicker = true }) {
+                CampoTextoPersonalizado(
+                    label = "Fecha de Reserva",
+                    valor = fecha,
+                    onCambio = {},
+                    enabled = false,
+                    readOnly = true,
+                    trailingIcon = { Icon(Icons.Default.DateRange, contentDescription = null) }
+                )
+            }
+
+            // CAMPO HORA
+            Box(modifier = Modifier.clickable { showTimePicker = true }) {
+                CampoTextoPersonalizado(
+                    label = "Hora",
+                    valor = hora,
+                    onCambio = {},
+                    enabled = false,
+                    readOnly = true
+                )
+            }
+
+            CampoTextoPersonalizado("Número de Cancha", cancha, onCambio = { cancha = it })
+            CampoTextoPersonalizado("Cantidad de Jugadores", jugadores, onCambio = { jugadores = it })
+            CampoTextoPersonalizado("Estado", estado, onCambio = { estado = it })
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(
                     onClick = {
-                        if (nombre.isNotBlank() && hora.isNotBlank() && cancha.isNotBlank()) {
-                            onGuardar(nombre, hora, cancha)
+                        if (nombre.isNotBlank() && fecha.isNotBlank() && hora.isNotBlank() && cancha.isNotBlank()) {
+                            onGuardar(nombre, fecha, hora, cancha)
                         }
                     },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(containerColor = verdeApp)
-                ) {
-                    Text("Guardar")
-                }
+                ) { Text("Guardar") }
 
-                Button(
-                    onClick = onCancelar,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
-                ) {
+                Button(onClick = onCancelar, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)) {
                     Text("Cancelar")
                 }
             }
@@ -96,14 +155,24 @@ fun MiPrimeraVista(
 }
 
 @Composable
-fun CampoTextoPersonalizado(label: String, valor: String, onCambio: (String) -> Unit) {
+fun CampoTextoPersonalizado(
+    label: String,
+    valor: String,
+    onCambio: (String) -> Unit,
+    enabled: Boolean = true,
+    readOnly: Boolean = false,
+    trailingIcon: @Composable (() -> Unit)? = null
+) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(text = label, fontSize = 14.sp, fontWeight = FontWeight.Medium)
         OutlinedTextField(
             value = valor,
             onValueChange = onCambio,
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            singleLine = true,
+            enabled = enabled,
+            readOnly = readOnly,
+            trailingIcon = trailingIcon
         )
     }
 }

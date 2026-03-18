@@ -52,7 +52,7 @@ class MainActivity : ComponentActivity() {
                         
                         is Pantalla.NuevaReserva -> MiPrimeraVista(
                             modifier = Modifier.padding(innerPadding),
-                            onGuardar = { nombre, hora, canchaNombre ->
+                            onGuardar = { nombre, fecha, hora, canchaNombre ->
                                 // 1. Creamos o buscamos a la persona
                                 val nuevaPersona = Persona(nombre = nombre, telefono = "Sin especificar")
                                 listaPersonas.add(nuevaPersona)
@@ -65,7 +65,7 @@ class MainActivity : ComponentActivity() {
                                 val nuevaReserva = Reserva(
                                     cliente = nuevaPersona,
                                     cancha = canchaSeleccionada,
-                                    fecha = "12/05/2026",
+                                    fecha = fecha,
                                     hora = hora
                                 )
                                 
@@ -76,8 +76,6 @@ class MainActivity : ComponentActivity() {
                         )
                         
                         is Pantalla.ListadoReservas -> {
-                            // Adaptamos nuestra lista de objetos Reserva al formato que espera la vista
-                            // Nota: En un futuro podrías actualizar ListadoReservasVista para que acepte directamente List<Reserva> (nuestro nuevo modelo)
                             val reservasParaVista = listaReservas.map { reserva ->
                                 com.example.parcial.ui.theme.Reserva(
                                     cliente = reserva.cliente.nombre,
