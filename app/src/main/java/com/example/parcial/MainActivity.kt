@@ -36,23 +36,15 @@ class MainActivity : ComponentActivity() {
                 val dao = db.reservaDao()
                 val scope = rememberCoroutineScope()
 
-                // --- ESTADO GLOBAL DESDE SQLITE ---
                 var pantallaActual by remember { mutableStateOf<Pantalla>(Pantalla.Dashboard) }
                 
-                // Observamos las reservas desde la BD
-                val listaReservasConDetalles by dao.obtenerTodasLasReservasConDetalles().collectAsState(initial = emptyList())
-                val listaReservas = listaReservasConDetalles.map { it.toReservaConDetalles() }
+                // Observamos las reservas con detalles (JOIN) desde la BD
+                val listaReservasConDetallesRaw by dao.obtenerTodasLasReservasConDetalles().collectAsState(initial = emptyList())
+                val listaReservasConDetalles = listaReservasConDetallesRaw.map { it.toReservaConDetalles() }
                 
-                // Las canchas las podemos manejar fijas o desde la BD
-                val listaCanchasFijas = listOf(
-                    Cancha(nombre = "Hoyo 1", tipo = "Pasto"),
-                    Cancha(nombre = "Hoyo 2", tipo = "Sintética"),
-                    Cancha(nombre = "Hoyo 3", tipo = "Pasto")
-                )
-
                 var reservaAEditarId by remember { mutableStateOf<Int?>(null) }
-                val reservaAEditar = if (reservaAEditarId != null) {
-                    listaReservas.find { it.id == reservaAEditarId }
+                val reservaAEditarDetalle = if (reservaAEditarId != null) {
+                    listaReservasConDetalles.find { it.id == reservaAEditarId }
                 } else null
 
                 fun obtenerEstadoReserva(fecha: String, hora: String): String {
@@ -70,7 +62,7 @@ class MainActivity : ComponentActivity() {
                     when (pantallaActual) {
                         is Pantalla.Dashboard -> DashboardVista(
                             modifier = Modifier.padding(innerPadding),
-                            proximasReservas = listaReservas.map { "${it.cliente.nombre} - ${it.hora} - ${it.cancha.nombre}" },
+                            proximasReservas = listaReservasConDetalles.map { "${it.cliente.nombre} - ${it.hora} - ${it.cancha.nombre}" },
                             onNuevaReserva = { 
                                 reservaAEditarId = null
                                 pantallaActual = Pantalla.NuevaReserva 
@@ -80,12 +72,9 @@ class MainActivity : ComponentActivity() {
                         
                         is Pantalla.NuevaReserva -> MiPrimeraVista(
                             modifier = Modifier.padding(innerPadding),
-                            // Adaptamos el modelo de la BD al modelo que espera la vista
-                            reservaAEditar = reservaAEditar?.let { 
-                                Reserva(it.id, it.cliente, it.cancha, it.fecha, it.hora, it.estado) 
-                            },
+                            reservaAEditar = reservaAEditarDetalle,
                             onGuardar = { nombre, telefono, fecha, hora, canchaNombre ->
-                                val existeReserva = listaReservas.any { 
+                                val existeReserva = listaReservasConDetalles.any { 
                                     it.id != reservaAEditarId &&
                                     it.cancha.nombre == canchaNombre && 
                                     it.fecha == fecha && 
@@ -95,12 +84,11 @@ class MainActivity : ComponentActivity() {
 
                                 if (!existeReserva) {
                                     scope.launch {
-                                        if (reservaAEditarId != null && reservaAEditar != null) {
-                                            // 1. Actualizar Persona
-                                            val persona = reservaAEditar.cliente.copy(nombre = nombre, telefono = telefono)
+                                        if (reservaAEditarId != null && reservaAEditarDetalle != null) {
+                                            // ACTUALIZAR
+                                            val persona = reservaAEditarDetalle.cliente.copy(nombre = nombre, telefono = telefono)
                                             dao.actualizarPersona(persona)
                                             
-                                            // 2. Buscar cancha
                                             var cancha = dao.obtenerCanchaPorNombre(canchaNombre)
                                             if (cancha == null) {
                                                 cancha = Cancha(nombre = canchaNombre, tipo = "Estándar")
@@ -108,7 +96,6 @@ class MainActivity : ComponentActivity() {
                                                 cancha = dao.obtenerCanchaPorNombre(canchaNombre)
                                             }
                                             
-                                            // 3. Actualizar Reserva
                                             val reserva = Reserva(
                                                 id = reservaAEditarId!!,
                                                 personaId = persona.id,
@@ -119,10 +106,9 @@ class MainActivity : ComponentActivity() {
                                             dao.actualizarReserva(reserva)
                                             reservaAEditarId = null
                                         } else {
-                                            // 1. Insertar Persona
+                                            // INSERTAR NUEVA
                                             val personaId = dao.insertarPersona(Persona(nombre = nombre, telefono = telefono))
                                             
-                                            // 2. Buscar o Insertar Cancha
                                             var cancha = dao.obtenerCanchaPorNombre(canchaNombre)
                                             if (cancha == null) {
                                                 cancha = Cancha(nombre = canchaNombre, tipo = "Estándar")
@@ -130,7 +116,6 @@ class MainActivity : ComponentActivity() {
                                                 cancha = dao.obtenerCanchaPorNombre(canchaNombre)
                                             }
                                             
-                                            // 3. Insertar Reserva
                                             dao.insertarReserva(Reserva(
                                                 personaId = personaId.toInt(),
                                                 canchaId = cancha?.id ?: 0,
@@ -153,7 +138,7 @@ class MainActivity : ComponentActivity() {
                         is Pantalla.ListadoReservas -> {
                             ListadoReservasVista(
                                 modifier = Modifier.padding(innerPadding),
-                                reservas = listaReservas.map { res ->
+                                reservas = listaReservasConDetalles.map { res ->
                                     com.example.parcial.ui.theme.Reserva(
                                         id = res.id,
                                         cliente = res.cliente.nombre,

@@ -20,7 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.parcial.Reserva
+import com.example.parcial.ReservaConDetalles
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -28,8 +28,8 @@ import java.util.*
 @Composable
 fun MiPrimeraVista(
     modifier: Modifier = Modifier,
-    reservaAEditar: Reserva? = null,
-    onGuardar: (String, String, String, String, String) -> Unit, // Se agregó parámetro para teléfono
+    reservaAEditar: ReservaConDetalles? = null,
+    onGuardar: (String, String, String, String, String) -> Unit,
     onCancelar: () -> Unit
 ) {
     val verdeApp = Color(0xFF388E3C)
