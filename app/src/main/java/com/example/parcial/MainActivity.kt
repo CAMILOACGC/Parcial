@@ -45,7 +45,8 @@ class MainActivity : ComponentActivity() {
                                 proximasReservas.add("$nombre - $hora - $cancha")
                                 pantallaActual = Pantalla.Dashboard
                             },
-                            onCancelar = { pantallaActual = Pantalla.Dashboard }
+                            onCancelar = { pantallaActual = Pantalla.Dashboard },
+                            onVolver = { pantallaActual = Pantalla.Dashboard }
                         )
                         is Pantalla.ListadoReservas -> ListadoReservasVista(
                             modifier = Modifier.padding(innerPadding),

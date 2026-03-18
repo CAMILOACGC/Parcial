@@ -1,6 +1,7 @@
 package com.example.parcial.ui.theme
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -17,7 +18,8 @@ import androidx.compose.ui.unit.sp
 fun MiPrimeraVista(
     modifier: Modifier = Modifier,
     onGuardar: (String, String, String) -> Unit,
-    onCancelar: () -> Unit
+    onCancelar: () -> Unit,
+    onVolver: () -> Unit
 ) {
     val verdeApp = Color(0xFF388E3C)
 
@@ -42,7 +44,13 @@ fun MiPrimeraVista(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = "<", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Text(
+                text = "<",
+                color = Color.White,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.clickable { onCancelar() }
+            )
             Spacer(modifier = Modifier.width(80.dp))
             Text(
                 text = "Nueva Reserva",
