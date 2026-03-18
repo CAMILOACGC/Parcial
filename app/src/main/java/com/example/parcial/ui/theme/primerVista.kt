@@ -152,7 +152,7 @@ fun MiPrimeraVista(
             CampoTextoPersonalizado(
                 label = "Teléfono",
                 valor = telefono,
-                onCambio = { if (it.length <= 10) telefono = it }, // Validación básica de longitud
+                onCambio = { if (it.all { char -> char.isDigit() } && it.length <= 10) telefono = it },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
             )
             
@@ -179,7 +179,12 @@ fun MiPrimeraVista(
                 )
             }
 
-            CampoTextoPersonalizado("Número de Cancha", cancha, onCambio = { cancha = it })
+            CampoTextoPersonalizado(
+                label = "Número de Cancha (1-5)",
+                valor = cancha,
+                onCambio = { if (it.isEmpty() || it.all { char -> char.isDigit() }) cancha = it },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            )
 
             // Selector de cantidad de jugadores
             Column(modifier = Modifier.fillMaxWidth()) {
@@ -220,12 +225,16 @@ fun MiPrimeraVista(
                     onClick = {
                         // Validación de reglas de negocio antes de guardar
                         val esTelefonoValido = telefono.startsWith("3") && telefono.length == 10 && telefono.all { it.isDigit() }
+                        val canchaInt = cancha.toIntOrNull()
+                        val esCanchaValida = canchaInt != null && canchaInt in 1..5
                         
                         if (nombre.isNotBlank() && fecha.isNotBlank() && hora.isNotBlank() && cancha.isNotBlank() && telefono.isNotBlank()) {
-                            if (esTelefonoValido) {
-                                onGuardar(nombre, telefono, fecha, hora, cancha)
-                            } else {
+                            if (!esTelefonoValido) {
                                 Toast.makeText(context, "Teléfono inválido. Debe iniciar con 3 y tener 10 dígitos.", Toast.LENGTH_LONG).show()
+                            } else if (!esCanchaValida) {
+                                Toast.makeText(context, "Número de cancha inválido. Debe ser entre 1 y 5.", Toast.LENGTH_LONG).show()
+                            } else {
+                                onGuardar(nombre, telefono, fecha, hora, cancha)
                             }
                         } else {
                             Toast.makeText(context, "Por favor complete todos los campos", Toast.LENGTH_SHORT).show()
