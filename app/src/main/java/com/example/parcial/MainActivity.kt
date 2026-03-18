@@ -79,13 +79,24 @@ class MainActivity : ComponentActivity() {
                     } catch (e: Exception) { "Activa" }
                 }
 
+                // Cálculo de estadísticas para el Dashboard
+                val hoy = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
+                val numReservasHoy = listaReservasConDetalles.count { it.fecha == hoy }
+                val numCanchasOcupadas = listaReservasConDetalles.count { 
+                    it.fecha == hoy && obtenerEstadoReserva(it.fecha, it.hora) == "Activa" 
+                }
+
                 // Estructura principal con Scaffold para manejo de paddings de sistema
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     when (pantallaActual) {
                         // --- VISTA DASHBOARD ---
                         is Pantalla.Dashboard -> DashboardVista(
                             modifier = Modifier.padding(innerPadding),
-                            proximasReservas = listaReservasConDetalles.map { "${it.cliente.nombre} - ${it.hora} - ${it.cancha.nombre}" },
+                            proximasReservas = listaReservasConDetalles
+                                .filter { obtenerEstadoReserva(it.fecha, it.hora) == "Activa" }
+                                .map { "${it.cliente.nombre} - ${it.hora} (${it.cancha.nombre})" },
+                            reservasHoy = numReservasHoy,
+                            canchasOcupadas = numCanchasOcupadas,
                             onNuevaReserva = { 
                                 reservaAEditarId = null 
                                 pantallaActual = Pantalla.NuevaReserva 

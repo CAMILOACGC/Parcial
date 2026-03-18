@@ -16,6 +16,8 @@ import androidx.compose.ui.unit.sp
 /**
  * DashboardVista: Pantalla principal de la aplicación que muestra un resumen.
  * @param proximasReservas Lista de strings con la información resumida de las reservas.
+ * @param reservasHoy Cantidad de reservas programadas para el día actual.
+ * @param canchasOcupadas Cantidad de canchas que tienen una reserva activa en este momento.
  * @param onNuevaReserva Acción al presionar el botón de crear reserva.
  * @param onListadoReservas Acción al presionar el botón de ver todas las reservas.
  */
@@ -23,20 +25,21 @@ import androidx.compose.ui.unit.sp
 fun DashboardVista(
     modifier: Modifier = Modifier,
     proximasReservas: List<String> = emptyList(),
+    reservasHoy: Int = 0,
+    canchasOcupadas: Int = 0,
     onNuevaReserva: () -> Unit = {},
     onListadoReservas: () -> Unit = {}
 ) {
     // Definición de la paleta de colores institucional
     val verdeOscuro = Color(0xFF2E7D32)
     val verdeMedio = Color(0xFF388E3C)
-    val verdeClaro = Color(0xFF43A047)
 
     Column(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
-        // Encabezado con el nombre del club y perfil (estético)
+        // Encabezado con el nombre del club y perfil
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -55,13 +58,13 @@ fun DashboardVista(
                 .fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // Fila de tarjetas estadísticas rápidas
+            // Fila de tarjetas estadísticas dinámicas
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                TarjetaEstadistica(Modifier.weight(1f), "Reservas Hoy", "0", verdeMedio)
-                TarjetaEstadistica(Modifier.weight(1f), "Canchas Ocupadas", "0", verdeOscuro)
+                TarjetaEstadistica(Modifier.weight(1f), "Reservas Hoy", reservasHoy.toString(), verdeMedio)
+                TarjetaEstadistica(Modifier.weight(1f), "Canchas Ocupadas", canchasOcupadas.toString(), verdeOscuro)
             }
 
             // Sección de lista rápida de próximas reservas
@@ -77,7 +80,6 @@ fun DashboardVista(
                     if (proximasReservas.isEmpty()) {
                         Text("No hay reservas aún", fontSize = 14.sp, color = Color.Gray)
                     } else {
-                        // Muestra solo los elementos de la lista
                         proximasReservas.forEach { reserva ->
                             Text(text = reserva, fontSize = 14.sp, modifier = Modifier.padding(vertical = 5.dp))
                             HorizontalDivider(color = Color(0xFFEEEEEE))
