@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -32,7 +33,7 @@ fun MiPrimeraVista(
     var fecha by remember { mutableStateOf("") }
     var hora by remember { mutableStateOf("") }
     var cancha by remember { mutableStateOf("") }
-    var jugadores by remember { mutableStateOf("") }
+    var cantidadJugadores by remember { mutableIntStateOf(1) }
     var estado by remember { mutableStateOf("") }
 
     // Estados para los Diálogos
@@ -130,7 +131,38 @@ fun MiPrimeraVista(
             }
 
             CampoTextoPersonalizado("Número de Cancha", cancha, onCambio = { cancha = it })
-            CampoTextoPersonalizado("Cantidad de Jugadores", jugadores, onCambio = { jugadores = it })
+
+            // SECCIÓN CANTIDAD DE JUGADORES CON BOTONES
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(text = "Cantidad de Jugadores", fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.padding(vertical = 4.dp)
+                ) {
+                    FilledIconButton(
+                        onClick = { if (cantidadJugadores > 1) cantidadJugadores-- },
+                        colors = IconButtonDefaults.filledIconButtonColors(containerColor = verdeApp)
+                    ) {
+                        Text("-", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                    }
+                    
+                    Text(
+                        text = cantidadJugadores.toString(),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.widthIn(min = 20.dp)
+                    )
+
+                    FilledIconButton(
+                        onClick = { cantidadJugadores++ },
+                        colors = IconButtonDefaults.filledIconButtonColors(containerColor = verdeApp)
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "Más")
+                    }
+                }
+            }
+
             CampoTextoPersonalizado("Estado", estado, onCambio = { estado = it })
 
             Spacer(modifier = Modifier.height(16.dp))
