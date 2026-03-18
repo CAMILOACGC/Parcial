@@ -1,9 +1,11 @@
 package com.example.parcial.ui.theme
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -13,9 +15,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.parcial.Reserva
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -23,25 +28,44 @@ import java.util.*
 @Composable
 fun MiPrimeraVista(
     modifier: Modifier = Modifier,
-    onGuardar: (String, String, String, String) -> Unit,
+    reservaAEditar: Reserva? = null,
+    onGuardar: (String, String, String, String, String) -> Unit, // Se agregó parámetro para teléfono
     onCancelar: () -> Unit
 ) {
     val verdeApp = Color(0xFF388E3C)
+    val context = LocalContext.current
 
-    var nombre by remember { mutableStateOf("") }
-    var telefono by remember { mutableStateOf("") }
-    var fecha by remember { mutableStateOf("") }
-    var hora by remember { mutableStateOf("") }
-    var cancha by remember { mutableStateOf("") }
+    var nombre by remember { mutableStateOf(reservaAEditar?.cliente?.nombre ?: "") }
+    var telefono by remember { mutableStateOf(reservaAEditar?.cliente?.telefono ?: "") }
+    var fecha by remember { mutableStateOf(reservaAEditar?.fecha ?: "") }
+    var hora by remember { mutableStateOf(reservaAEditar?.hora ?: "") }
+    var cancha by remember { mutableStateOf(reservaAEditar?.cancha?.nombre ?: "") }
     var cantidadJugadores by remember { mutableIntStateOf(1) }
-    var estado by remember { mutableStateOf("") }
 
     // Estados para los Diálogos
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
 
-    val datePickerState = rememberDatePickerState()
-    val timePickerState = rememberTimePickerState(is24Hour = true)
+    // Configuración para no permitir fechas pasadas
+    val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+    calendar.set(Calendar.HOUR_OF_DAY, 0)
+    calendar.set(Calendar.MINUTE, 0)
+    calendar.set(Calendar.SECOND, 0)
+    calendar.set(Calendar.MILLISECOND, 0)
+    val hoyUtc = calendar.timeInMillis
+
+    val datePickerState = rememberDatePickerState(
+        selectableDates = object : SelectableDates {
+            override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                return utcTimeMillis >= hoyUtc
+            }
+        }
+    )
+    val timePickerState = rememberTimePickerState(
+        initialHour = if (reservaAEditar != null) reservaAEditar.hora.split(":")[0].toInt() else 0,
+        initialMinute = if (reservaAEditar != null) reservaAEditar.hora.split(":")[1].toInt() else 0,
+        is24Hour = true
+    )
 
     if (showDatePicker) {
         DatePickerDialog(
@@ -50,6 +74,7 @@ fun MiPrimeraVista(
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let {
                         val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                        sdf.timeZone = TimeZone.getTimeZone("UTC")
                         fecha = sdf.format(Date(it))
                     }
                     showDatePicker = false
@@ -95,7 +120,12 @@ fun MiPrimeraVista(
         ) {
             Text(text = "<", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable { onCancelar() })
             Spacer(modifier = Modifier.width(80.dp))
-            Text(text = "Nueva Reserva", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text(
+                text = if (reservaAEditar != null) "Editar Reserva" else "Nueva Reserva",
+                color = Color.White,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold
+            )
         }
 
         Column(
@@ -105,7 +135,13 @@ fun MiPrimeraVista(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             CampoTextoPersonalizado("Nombre del Cliente", nombre, onCambio = { nombre = it })
-            CampoTextoPersonalizado("Teléfono", telefono, onCambio = { telefono = it })
+            
+            CampoTextoPersonalizado(
+                label = "Teléfono",
+                valor = telefono,
+                onCambio = { if (it.length <= 10) telefono = it },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
+            )
             
             // CAMPO FECHA
             Box(modifier = Modifier.clickable { showDatePicker = true }) {
@@ -163,15 +199,21 @@ fun MiPrimeraVista(
                 }
             }
 
-            CampoTextoPersonalizado("Estado", estado, onCambio = { estado = it })
-
             Spacer(modifier = Modifier.height(16.dp))
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(
                     onClick = {
-                        if (nombre.isNotBlank() && fecha.isNotBlank() && hora.isNotBlank() && cancha.isNotBlank()) {
-                            onGuardar(nombre, fecha, hora, cancha)
+                        val esTelefonoValido = telefono.startsWith("3") && telefono.length == 10 && telefono.all { it.isDigit() }
+                        
+                        if (nombre.isNotBlank() && fecha.isNotBlank() && hora.isNotBlank() && cancha.isNotBlank() && telefono.isNotBlank()) {
+                            if (esTelefonoValido) {
+                                onGuardar(nombre, telefono, fecha, hora, cancha)
+                            } else {
+                                Toast.makeText(context, "Teléfono inválido. Debe iniciar con 3 y tener 10 dígitos.", Toast.LENGTH_LONG).show()
+                            }
+                        } else {
+                            Toast.makeText(context, "Por favor complete todos los campos", Toast.LENGTH_SHORT).show()
                         }
                     },
                     modifier = Modifier.weight(1f),
@@ -193,6 +235,7 @@ fun CampoTextoPersonalizado(
     onCambio: (String) -> Unit,
     enabled: Boolean = true,
     readOnly: Boolean = false,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     trailingIcon: @Composable (() -> Unit)? = null
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -204,6 +247,7 @@ fun CampoTextoPersonalizado(
             singleLine = true,
             enabled = enabled,
             readOnly = readOnly,
+            keyboardOptions = keyboardOptions,
             trailingIcon = trailingIcon
         )
     }

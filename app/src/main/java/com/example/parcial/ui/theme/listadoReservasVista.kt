@@ -17,9 +17,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Delete
 
-// Clase de datos auxiliar para la vista (Diferente a la del modelo de negocio)
+// Clase de datos auxiliar para la vista
 data class Reserva(
+    val id: Int,
     val cliente: String,
     val fecha: String,
     val hora: String,
@@ -31,7 +33,9 @@ data class Reserva(
 fun ListadoReservasVista(
     modifier: Modifier = Modifier,
     reservas: List<Reserva>,
-    onVolver: () -> Unit
+    onVolver: () -> Unit,
+    onEditar: (Int) -> Unit,
+    onEliminar: (Int) -> Unit
 ) {
     val verdeApp = Color(0xFF388E3C)
     var busqueda by remember { mutableStateOf("") }
@@ -100,7 +104,7 @@ fun ListadoReservasVista(
                 Text("Hora", fontWeight = FontWeight.Bold, fontSize = 12.sp, modifier = Modifier.weight(1.5f))
                 Text("Cancha", fontWeight = FontWeight.Bold, fontSize = 12.sp, modifier = Modifier.weight(1f))
                 Text("Estado", fontWeight = FontWeight.Bold, fontSize = 12.sp, modifier = Modifier.weight(1.5f))
-                Text("Acciones", fontWeight = FontWeight.Bold, fontSize = 12.sp, modifier = Modifier.weight(1f))
+                Text("Acciones", fontWeight = FontWeight.Bold, fontSize = 12.sp, modifier = Modifier.weight(1.5f))
             }
 
             HorizontalDivider()
@@ -110,7 +114,11 @@ fun ListadoReservasVista(
             } else {
                 LazyColumn {
                     items(reservasFiltradas) { reserva ->
-                        FilaReserva(reserva = reserva)
+                        FilaReserva(
+                            reserva = reserva,
+                            onEditar = { onEditar(reserva.id) },
+                            onEliminar = { onEliminar(reserva.id) }
+                        )
                         HorizontalDivider(color = Color(0xFFEEEEEE))
                     }
                 }
@@ -120,7 +128,11 @@ fun ListadoReservasVista(
 }
 
 @Composable
-fun FilaReserva(reserva: Reserva) {
+fun FilaReserva(
+    reserva: Reserva,
+    onEditar: () -> Unit,
+    onEliminar: () -> Unit
+) {
     val colorEstado = if (reserva.estado == "Activa") Color(0xFF388E3C) else Color(0xFFD32F2F)
 
     Row(
@@ -130,29 +142,43 @@ fun FilaReserva(reserva: Reserva) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(reserva.cliente, fontSize = 12.sp, modifier = Modifier.weight(1.5f))
-        Text(reserva.fecha, fontSize = 12.sp, modifier = Modifier.weight(2f))
-        Text(reserva.hora, fontSize = 12.sp, modifier = Modifier.weight(1.5f))
-        Text(reserva.cancha, fontSize = 12.sp, modifier = Modifier.weight(1f))
+        Text(reserva.cliente, fontSize = 11.sp, modifier = Modifier.weight(1.5f))
+        Text(reserva.fecha, fontSize = 11.sp, modifier = Modifier.weight(2f))
+        Text(reserva.hora, fontSize = 11.sp, modifier = Modifier.weight(1.5f))
+        Text(reserva.cancha, fontSize = 11.sp, modifier = Modifier.weight(1f))
 
         Box(modifier = Modifier.weight(1.5f)) {
             Text(
                 text = reserva.estado,
                 color = Color.White,
-                fontSize = 11.sp,
+                fontSize = 10.sp,
                 modifier = Modifier
                     .background(colorEstado, RoundedCornerShape(4.dp))
-                    .padding(horizontal = 6.dp, vertical = 3.dp)
+                    .padding(horizontal = 4.dp, vertical = 2.dp)
             )
         }
 
-        Icon(
-            imageVector = Icons.Default.Edit,
-            contentDescription = "Editar",
-            tint = Color(0xFF388E3C),
-            modifier = Modifier
-                .weight(1f)
-                .size(18.dp)
-        )
+        Row(
+            modifier = Modifier.weight(1.5f),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Edit,
+                contentDescription = "Editar",
+                tint = Color(0xFF388E3C),
+                modifier = Modifier
+                    .size(20.dp)
+                    .clickable { onEditar() }
+            )
+            Icon(
+                imageVector = Icons.Default.Delete,
+                contentDescription = "Eliminar",
+                tint = Color(0xFFD32F2F),
+                modifier = Modifier
+                    .size(20.dp)
+                    .clickable { onEliminar() }
+            )
+        }
     }
 }
