@@ -24,6 +24,12 @@ import com.example.parcial.ReservaConDetalles
 import java.text.SimpleDateFormat
 import java.util.*
 
+/**
+ * MiPrimeraVista: Componente de UI para crear o editar una reserva.
+ * @param reservaAEditar Si se proporciona, la vista se precarga con los datos de esta reserva.
+ * @param onGuardar Callback que se ejecuta al presionar el botón de guardar.
+ * @param onCancelar Callback para volver a la pantalla anterior sin guardar.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MiPrimeraVista(
@@ -35,6 +41,7 @@ fun MiPrimeraVista(
     val verdeApp = Color(0xFF388E3C)
     val context = LocalContext.current
 
+    // Estados para los campos del formulario, inicializados con los valores de la reserva a editar si existe
     var nombre by remember { mutableStateOf(reservaAEditar?.cliente?.nombre ?: "") }
     var telefono by remember { mutableStateOf(reservaAEditar?.cliente?.telefono ?: "") }
     var fecha by remember { mutableStateOf(reservaAEditar?.fecha ?: "") }
@@ -42,11 +49,11 @@ fun MiPrimeraVista(
     var cancha by remember { mutableStateOf(reservaAEditar?.cancha?.nombre ?: "") }
     var cantidadJugadores by remember { mutableIntStateOf(1) }
 
-    // Estados para los Diálogos
+    // Estados para controlar la visibilidad de los selectores de fecha y hora
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
 
-    // Configuración para no permitir fechas pasadas
+    // Configuración del DatePicker para restringir la selección a fechas futuras (hoy en adelante)
     val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
     calendar.set(Calendar.HOUR_OF_DAY, 0)
     calendar.set(Calendar.MINUTE, 0)
@@ -61,12 +68,15 @@ fun MiPrimeraVista(
             }
         }
     )
+    
+    // Configuración inicial del TimePicker
     val timePickerState = rememberTimePickerState(
         initialHour = if (reservaAEditar != null) reservaAEditar.hora.split(":")[0].toInt() else 0,
         initialMinute = if (reservaAEditar != null) reservaAEditar.hora.split(":")[1].toInt() else 0,
         is24Hour = true
     )
 
+    // Diálogo para selección de fecha
     if (showDatePicker) {
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
@@ -88,6 +98,7 @@ fun MiPrimeraVista(
         }
     }
 
+    // Diálogo para selección de hora
     if (showTimePicker) {
         AlertDialog(
             onDismissRequest = { showTimePicker = false },
@@ -109,8 +120,9 @@ fun MiPrimeraVista(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(rememberScrollState()) // Permite scroll si el formulario es largo
     ) {
+        // Barra superior de la pantalla
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -128,6 +140,7 @@ fun MiPrimeraVista(
             )
         }
 
+        // Cuerpo del formulario
         Column(
             modifier = Modifier
                 .padding(16.dp)
@@ -139,11 +152,11 @@ fun MiPrimeraVista(
             CampoTextoPersonalizado(
                 label = "Teléfono",
                 valor = telefono,
-                onCambio = { if (it.length <= 10) telefono = it },
+                onCambio = { if (it.length <= 10) telefono = it }, // Validación básica de longitud
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
             )
             
-            // CAMPO FECHA
+            // Selector de fecha interactivo
             Box(modifier = Modifier.clickable { showDatePicker = true }) {
                 CampoTextoPersonalizado(
                     label = "Fecha de Reserva",
@@ -155,7 +168,7 @@ fun MiPrimeraVista(
                 )
             }
 
-            // CAMPO HORA
+            // Selector de hora interactivo
             Box(modifier = Modifier.clickable { showTimePicker = true }) {
                 CampoTextoPersonalizado(
                     label = "Hora",
@@ -168,7 +181,7 @@ fun MiPrimeraVista(
 
             CampoTextoPersonalizado("Número de Cancha", cancha, onCambio = { cancha = it })
 
-            // SECCIÓN CANTIDAD DE JUGADORES CON BOTONES
+            // Selector de cantidad de jugadores
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(text = "Cantidad de Jugadores", fontSize = 14.sp, fontWeight = FontWeight.Medium)
                 Row(
@@ -201,9 +214,11 @@ fun MiPrimeraVista(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Botones de acción
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(
                     onClick = {
+                        // Validación de reglas de negocio antes de guardar
                         val esTelefonoValido = telefono.startsWith("3") && telefono.length == 10 && telefono.all { it.isDigit() }
                         
                         if (nombre.isNotBlank() && fecha.isNotBlank() && hora.isNotBlank() && cancha.isNotBlank() && telefono.isNotBlank()) {
@@ -228,6 +243,9 @@ fun MiPrimeraVista(
     }
 }
 
+/**
+ * Componente reutilizable para campos de entrada de texto con etiqueta.
+ */
 @Composable
 fun CampoTextoPersonalizado(
     label: String,

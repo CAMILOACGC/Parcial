@@ -19,7 +19,9 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Delete
 
-// Clase de datos auxiliar para la vista
+/**
+ * Clase de datos auxiliar para representar una reserva en la interfaz de usuario de listado.
+ */
 data class Reserva(
     val id: Int,
     val cliente: String,
@@ -29,6 +31,14 @@ data class Reserva(
     val estado: String
 )
 
+/**
+ * ListadoReservasVista: Pantalla que muestra todas las reservas registradas.
+ * Permite buscar por nombre de cliente, editar o eliminar registros.
+ * @param reservas Lista de objetos Reserva para mostrar.
+ * @param onVolver Acción para regresar al Dashboard.
+ * @param onEditar Acción para abrir el formulario de edición con un ID específico.
+ * @param onEliminar Acción para borrar una reserva de la base de datos.
+ */
 @Composable
 fun ListadoReservasVista(
     modifier: Modifier = Modifier,
@@ -38,8 +48,10 @@ fun ListadoReservasVista(
     onEliminar: (Int) -> Unit
 ) {
     val verdeApp = Color(0xFF388E3C)
+    // Estado para el texto de búsqueda
     var busqueda by remember { mutableStateOf("") }
 
+    // Filtrado reactivo de la lista basado en el texto de búsqueda
     val reservasFiltradas = reservas.filter {
         it.cliente.contains(busqueda, ignoreCase = true)
     }
@@ -47,6 +59,7 @@ fun ListadoReservasVista(
     Column(
         modifier = modifier.fillMaxSize()
     ) {
+        // Encabezado con botón de regreso
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -76,6 +89,7 @@ fun ListadoReservasVista(
                 .fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+            // Campo de búsqueda con icono de lupa
             OutlinedTextField(
                 value = busqueda,
                 onValueChange = { busqueda = it },
@@ -92,6 +106,7 @@ fun ListadoReservasVista(
                 shape = RoundedCornerShape(8.dp)
             )
 
+            // Cabecera de la tabla de datos
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -109,6 +124,7 @@ fun ListadoReservasVista(
 
             HorizontalDivider()
 
+            // Lista deslizable de reservas
             if (reservasFiltradas.isEmpty()) {
                 Text("No hay reservas", fontSize = 14.sp, color = Color.Gray, modifier = Modifier.padding(top = 16.dp))
             } else {
@@ -127,12 +143,16 @@ fun ListadoReservasVista(
     }
 }
 
+/**
+ * Componente que representa una fila individual en la tabla de reservas.
+ */
 @Composable
 fun FilaReserva(
     reserva: Reserva,
     onEditar: () -> Unit,
     onEliminar: () -> Unit
 ) {
+    // Definir color del estado (Verde para Activa, Rojo para otras)
     val colorEstado = if (reserva.estado == "Activa") Color(0xFF388E3C) else Color(0xFFD32F2F)
 
     Row(
@@ -147,6 +167,7 @@ fun FilaReserva(
         Text(reserva.hora, fontSize = 11.sp, modifier = Modifier.weight(1.5f))
         Text(reserva.cancha, fontSize = 11.sp, modifier = Modifier.weight(1f))
 
+        // Etiqueta de estado con fondo redondeado
         Box(modifier = Modifier.weight(1.5f)) {
             Text(
                 text = reserva.estado,
@@ -158,6 +179,7 @@ fun FilaReserva(
             )
         }
 
+        // Iconos de acciones (Editar y Eliminar)
         Row(
             modifier = Modifier.weight(1.5f),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
